@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\QuickBooksController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/quickbook',[QuickBooksController::class,'index']);
+Route::get('/callback',[QuickBooksController::class,'callback']);
+Route::get('/create/account',[QuickBooksController::class,'createAccount']);
