@@ -92,13 +92,13 @@ class QuickBooksController extends Controller
 
         $token = Token::all();
 
-        if (count($token) == 0) {
+
             Token::create([
                 'qb_token' => $accessTokenObj->getAccessToken(),
                 'company_id' => $accessTokenObj->getRealmID(),
                 'refresh_token' => $accessTokenObj->getRefreshToken()
             ]);
-        };
+
 
 
 
@@ -112,9 +112,9 @@ class QuickBooksController extends Controller
     public function prepareDataService()
     {
         // $accessTokenObj = session()->get('accessTokenObj');
-        $accessTokenObj = Token::first();
+        $accessTokenObj = Token::query()->latest()->get()->take(1);
 
-        //dd( $accessTokenObj ) ;
+        $accessTokenObj =  $accessTokenObj[0] ;
         // Prep Data Services
         $accessTokenValue = $accessTokenObj->qb_token;
         $companyId =  $accessTokenObj->company_id;
@@ -185,6 +185,7 @@ class QuickBooksController extends Controller
     }
 
 
+    // this one working
     public function testAccount()
     {
         # Create quickbook accounts
@@ -195,12 +196,20 @@ class QuickBooksController extends Controller
 
         //Add a new Vendor
         $theResourceObj = Account::create([
-            "AccountType" => "Accounts Receivable",
-            "Name" => "Second Account test"
+
+            "AccountType"=> "Accounts Receivable",
+            "Name"=> "MyJobs_Abraham",
+            "SyncToken"=> 1,
+            "AcctNum"=>"0707585566"
+
+
+
+
         ]);
 
         $resultingObj = $dataService->Add($theResourceObj);
         $error = $dataService->getLastError();
+
         if ($error) {
             echo "The Status code is: " . $error->getHttpStatusCode() . "\n";
             echo "The Helper message is: " . $error->getOAuthHelperError() . "\n";
@@ -210,6 +219,16 @@ class QuickBooksController extends Controller
             $xmlBody = XmlObjectSerializer::getPostXmlFromArbitraryEntity($resultingObj, $urlResource);
             echo $xmlBody . "\n";
         }
+    }
+    public function fetchAccount($accountId)
+    {
+        // dd($accountId);
+        # Create quickbook accounts
+        $dataService = $this->prepareDataService();
+        $allInvoices = $dataService->Query("SELECT * FROM Account");
+        return $allInvoices ;
+    //    $account =  $dataService->FindById("Account", 93);
+    //    return $account ;
     }
     public function fetchData()
     {

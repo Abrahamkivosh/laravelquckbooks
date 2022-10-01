@@ -30,5 +30,7 @@ Route::get('/', function () {
 })->name('mtaani');
 Route::get('/quickbook',[QuickBooksController::class,'index']);
 Route::get('/callback',[QuickBooksController::class,'callback']);
+
+Route::get('/accounts/{account}',[QuickBooksController::class,'fetchAccount']);
 Route::get('/create/account',[QuickBooksController::class,'testAccount']);
 Route::get('/create_customer', [QuickBooksController::class,'createAccount']);
