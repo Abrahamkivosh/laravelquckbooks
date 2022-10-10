@@ -15,7 +15,16 @@ return new class extends Migration
     {
         Schema::create('tokens', function (Blueprint $table) {
             $table->id();
-            $table->longText('qb_token');
+            $table->string('realm_id')->nullable();
+
+            $table->string('access_token')->nullable();
+            $table->string('refresh_token')->nullable();
+            $table->string('x_refresh_token_expires_in')->nullable();
+            $table->string('id_token')->nullable();
+            $table->string('token_type')->nullable();
+            $table->string('expires_in')->nullable();
+            $table->string('code')->nullable();
+            
             $table->timestamps();
         });
     }

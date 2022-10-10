@@ -4,215 +4,112 @@ namespace App\Http\Controllers;
 
 use App\Models\Token;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use QuickBooksOnline\API\Core\Http\Serialization\XmlObjectSerializer;
-use QuickBooksOnline\API\Facades\Account;
-use QuickBooksOnline\API\DataService\DataService;
-use QuickBooksOnline\API\Facades\Customer;
-use QuickBooksOnline\API\Facades\Vendor;
-
+// use quickbooks repository class
+use App\Http\Repositories\QuickBooksRepository;
 class QuickBooksController extends Controller
 {
-    protected function dataService()
+    // quickbooks controller
+    // use quickbooks repository class
+    protected $quickbooks;
+    public function __construct(QuickBooksRepository $quickbooks)
     {
-        // Prep Data Services
-        $dataService = DataService::Configure(array(
-            'auth_mode' => 'oauth2',
-            'ClientID' => "ABFwF5Bo78Y6oTjAgasqcjtxjR8TTqYiR28NQ4Db6cBKRSDFZQ",
-            'ClientSecret' => "DdhLpNAa3cIjOCeY1232F14xAiB6FcgO4KQT4JJf",
-            'RedirectURI' => "http://localhost:8000/callback",
-            'scope' => "com.intuit.quickbooks.accounting",
-            'baseUrl' => "Development"
-        ));
-
-
-        /**
-         * You can use setMinorVersion() to specify which minor version you want
-         *  to use against QuickBooks Online API.
-         * default 8
-         */
-        $dataService->setMinorVersion("9");
-        /**
-         * Logging is default to be turned ON QuickBooks V3 PHP SDK. You can use
-         *  disableLog() to disable logging. tmp
-         */
-        $dataService->disableLog();
-        /**
-         * If a request failed, the DataService will record the error on its lastError
-         *  object, and developer should always use
-         */
-        $error = $dataService->getLastError();
-        // dd($error) ;
-        // If no error it will return false
-        if ($error) {
-            Log::error($error);
-        }
-        return $dataService;
+        $this->quickbooks = $quickbooks;
     }
 
+    // quickbooks initiate connection
+    public function initiateConnection()
+    {
+        $authUrl = $this->quickbooks->getAuthUrl();
+        return redirect($authUrl);
+    }
+
+    // quickbooks index
     public function index()
     {
-
-        $dataService = $this->dataService();
-        // dd($dataService);
-        // ServiceContext contains all the information associated with the DataService
-        $serviceContext = $dataService->getServiceContext();
-        // dd($serviceContext);
-        $OAuth2LoginHelper = $dataService->getOAuth2LoginHelper();
-
-        // dd($OAuth2LoginHelper);
-        $authorizationCodeUrl = $OAuth2LoginHelper->getAuthorizationCodeURL();
-        // dd($authorizationCodeUrl);
-        // Redirect client to enable him to login in to his acc to auth the sys
-        return redirect($authorizationCodeUrl);
+        return view('quickbooks.index');
     }
-    public function callback(Request $request)
-    {
-        /**
-         * DATA RETURNED AFTER  AUTHORIZING
-         * 'code' => '',
-         *  'state' => '',
-         * 'realmId' => '',
-         */
-        $data = $request->all();
-        Log::info($data);
-        $dataService = $this->dataService();
-
-        $OAuth2LoginHelper = $dataService->getOAuth2LoginHelper();
-
-        /**
-         * Pass the returned realmId
-         * parameters to “exchangeAuthorizationCodeForToken” method to exchange for OAuth 2 tokens:
-
-         */
-        $accessTokenObj = $OAuth2LoginHelper->exchangeAuthorizationCodeForToken($data['code'], $data['realmId']);
-
-        // dd($accessTokenObj->getAccessToken());
-        // dd($accessTokenObj['accessTokenKey']);
-
-        $token = Token::all();
-
-        if (count($token) == 0) {
-            Token::create([
-                'qb_token' => $accessTokenObj->getAccessToken(),
-                'company_id' => $accessTokenObj->getRealmID(),
-                'refresh_token' => $accessTokenObj->getRefreshToken()
-            ]);
-        };
 
 
+    // quickbooks callback save token
+    // quickbooks callback
+public function callback(Request $request)
+{
+   
+    // get access token from code 
+    $accessToken = $this->quickbooks->getAccessTokenObjFromCode($request->code, $request->realmId);
 
-        // dd($accessTokenObj);
+    // log access token
 
-        // $request->session()->put('accessTokenObj', $accessTokenObj);
-        // dd("READY TO DO YOUR STAFF");
-
-        return redirect()->route('mtaani');
-    }
-    public function prepareDataService()
-    {
-        // $accessTokenObj = session()->get('accessTokenObj');
-        $accessTokenObj = Token::first();
-
-        //dd( $accessTokenObj ) ;
-        // Prep Data Services
-        $accessTokenValue = $accessTokenObj->qb_token;
-        $companyId =  $accessTokenObj->company_id;
-        $dataService = DataService::Configure(array(
-            'auth_mode' => 'oauth2',
-            'ClientID' => "ABFwF5Bo78Y6oTjAgasqcjtxjR8TTqYiR28NQ4Db6cBKRSDFZQ",
-            'ClientSecret' =>  "DdhLpNAa3cIjOCeY1232F14xAiB6FcgO4KQT4JJf",
-            'accessTokenKey' => $accessTokenValue,
-            'refreshTokenKey' =>  $accessTokenObj->refresh_token,
-            'QBORealmID' => $companyId,
-            'baseUrl' => "Development"
-        ));
-
-        return $dataService;
-    }
-    public function createAccount()
-    {
-        # Create quickbook accounts
-        $dataService = $this->prepareDataService();
-        // dd($dataService);
-
-        $dataService->throwExceptionOnError(true);
-        //Add a new Vendor
-        $theResourceObj = Vendor::create([
-            "BillAddr" => [
-                "Line1" => "Dianne's Auto Shop",
-                "Line2" => "Dianne Bradley",
-                "Line3" => "29834 Mustang Ave.",
-                "City" => "Millbrae",
-                "Country" => "U.S.A",
-                "CountrySubDivisionCode" => "CA",
-                "PostalCode" => "94030"
-            ],
-            "TaxIdentifier" => "99-5688293",
-            "AcctNum" => "35372649",
-            "Title" => "Ms.",
-            "GivenName" => "Dianne",
-            "FamilyName" => "Bradley",
-            "Suffix" => "Sr.",
-            "CompanyName" => "Dianne's Auto Shop",
-            "DisplayName" => "Dianne's Auto Shop",
-            "PrintOnCheckName" => "Dianne's Auto Shop",
-            "PrimaryPhone" => [
-                "FreeFormNumber" => "(650) 555-2342"
-            ],
-            "Mobile" => [
-                "FreeFormNumber" => "(650) 555-2000"
-            ],
-            "PrimaryEmailAddr" => [
-                "Address" => "dbradley@myemail.com"
-            ],
-            "WebAddr" => [
-                "URI" => "http://DiannesAutoShop.com"
-            ]
+    $token = Token::where('realm_id', $request->realmId)->first();
+    if ($token) {
+        $token->access_token = $accessToken->getAccessToken();
+        $token->refresh_token = $accessToken->getRefreshToken();
+        $token->x_refresh_token_expires_in = $accessToken->getRefreshTokenExpiresAt();
+        // $token->id_token = $accessToken->getIdToken();
+        $token->code = $request->code;
+        $token->save();
+    } else {
+        Token::create([
+            'realm_id' => $request->realmId,
+            'access_token' => $accessToken->getAccessToken(),
+            'refresh_token' => $accessToken->getRefreshToken(),
+            'expires_in' => $accessToken->getAccessTokenExpiresAt(),
+            'x_refresh_token_expires_in' => $accessToken->getRefreshTokenExpiresAt(),
+            // 'token_type' => $accessToken->getTokenType(),
+            // 'id_token' => $accessToken->getIdToken(),
+            'code' => $request->code,
         ]);
-
-        $resultingObj = $dataService->Add($theResourceObj);
-        $error = $dataService->getLastError();
-        if ($error) {
-            echo "The Status code is: " . $error->getHttpStatusCode() . "\n";
-            echo "The Helper message is: " . $error->getOAuthHelperError() . "\n";
-            echo "The Response message is: " . $error->getResponseBody() . "\n";
-        } else {
-            echo "Created Id={$resultingObj->Id}. Reconstructed response body:\n\n";
-            $xmlBody = XmlObjectSerializer::getPostXmlFromArbitraryEntity($resultingObj, $urlResource);
-            echo $xmlBody . "\n";
-        }
     }
+    return redirect()->route('quickbooks.index');
+}
 
 
-    public function testAccount()
+  
+    
+    // quickbooks refresh
+    public function refresh()
     {
-        # Create quickbook accounts
-        $dataService = $this->prepareDataService();
-        // dd($dataService);
-
-        $dataService->throwExceptionOnError(true);
-
-        //Add a new Vendor
-        $theResourceObj = Account::create([
-            "AccountType" => "Accounts Receivable",
-            "Name" => "Second Account test"
+        $url = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+        $response = Http::post($url, [
+            'client_id' => config('app.quickbooks.client_id'),
+            'client_secret' => config('app.quickbooks.client_secret'),
+            'redirect_uri' => config('app.quickbooks.redirect_uri'),
+            'grant_type' => 'refresh_token',
+            'refresh_token' => Token::latest()->first()->refresh_token,
         ]);
-
-        $resultingObj = $dataService->Add($theResourceObj);
-        $error = $dataService->getLastError();
-        if ($error) {
-            echo "The Status code is: " . $error->getHttpStatusCode() . "\n";
-            echo "The Helper message is: " . $error->getOAuthHelperError() . "\n";
-            echo "The Response message is: " . $error->getResponseBody() . "\n";
-        } else {
-            echo "Created Id={$resultingObj->Id}. Reconstructed response body:\n\n";
-            $xmlBody = XmlObjectSerializer::getPostXmlFromArbitraryEntity($resultingObj, $urlResource);
-            echo $xmlBody . "\n";
-        }
+        // update token in database
+        $token = Token::latest()->first();
+        $token->access_token = $response->json()['access_token'];
+        $token->refresh_token = $response->json()['refresh_token'];
+        $token->x_refresh_token_expires_in = $response->json()['x_refresh_token_expires_in'];
+        $token->id_token = $response->json()['id_token'];
+        $token->token_type = $response->json()['token_type'];
+        $token->expires_in = $response->json()['expires_in'];
+        $token->save();
+        return redirect()->route('quickbooks.account');
     }
-    public function fetchData()
+    // quickbooks revoke
+    public function revoke()
     {
-        # code...
+        $url = 'https://developer.api.intuit.com/v2/oauth2/tokens/revoke';
+        $response = Http::post($url, [
+            'client_id' => config('app.quickbooks.client_id'),
+            'client_secret' => config('app.quickbooks.client_secret'),
+            'token' => Token::latest()->first()->access_token,
+        ]);
+        // delete token from database
+        Token::latest()->first()->delete();
+        return redirect()->route('quickbooks.account');
     }
+    // quickbooks accounts
+    public function accounts()
+    {
+        $accounts = $this->quickbooks->getAccounts() ;
+
+        return view('quickbooks.account', compact('accounts'));
+    }
+   
+   
 }
