@@ -120,6 +120,42 @@ public function callback(Request $request)
         // $account = dd($account) ;
         return view('quickbooks.single_account', compact('account'));
     }
+    // createAccount
+    public function createAccount()
+    {
+        return view('quickbooks.create_account');
+    }
+    // storeAccount
+    public function storeAccount(Request $request)
+    {
+        // validate request
+        $request->validate([
+            'name' => 'required',
+            'account_type' => 'required',
+            // 'account_sub_type' => 'required',
+            'description' => 'required',
+            'account_number' => 'required',
+            'active' => 'required',
+            'classification' => 'required',
+            'current_balance' => 'required',
+            // 'current_balance_with_sub_accounts' => 'nullable',
+            'domain' => 'required',
+            
+
+        ]);
+  
+        $this->quickbooks->createAccount($request->all());
+        // flash message
+        session()->flash('success', 'Account created successfully');
+        return redirect()->route('quickbooks.account');
+    }
+    // editAccount
+    public function editAccount($id)
+    {
+        $account = $this->quickbooks->getAccount($id);
+        return view('quickbooks.edit_account', compact('account'));
+    }
+    
 
    
    

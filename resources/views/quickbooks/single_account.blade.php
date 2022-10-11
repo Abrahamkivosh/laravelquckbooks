@@ -6,9 +6,10 @@
             {{--  breadcrumbs  --}}
             <div class="col-md-12">
                 <ol class="breadcrumb">
-                    <li><a href="{{ route('home') }}">Home</a></li>
-                    <li><a href="{{ route('quickbooks.account') }}">Quickbooks Accounts</a></li>
-                    <li class="active">{{ $account->Name }}</li>
+                    {{--  breadcrumbs item  --}}
+                    <li class=" breadcrumb-item "  ><a href="{{ route('home') }}">Home</a></li>
+                    <li  class=" breadcrumb-item "  ><a href="{{ route('quickbooks.account') }}">Quickbooks Accounts</a></li>
+                    <li class=" breadcrumb-item active  ">{{ $account->Name }}</li>
                 </ol>
         </div>
         {{--  account details  --}}

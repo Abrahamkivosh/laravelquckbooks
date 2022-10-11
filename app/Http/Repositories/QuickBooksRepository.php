@@ -60,6 +60,18 @@ class QuickBooksRepository
     public function getAccessToken()
     {
         $token = Token::first();
+        // check if token as expired
+        if ($token->expires_in < now()) {
+            // refresh token
+            $accessToken = $this->dataService->refreshOAuth2Token($token->refresh_token);
+            // update token
+            $token->access_token = $accessToken->getAccessToken();
+            $token->refresh_token = $accessToken->getRefreshToken();
+            $token->expires_in = $accessToken->getAccessTokenExpiresAt();
+            $token->x_refresh_token_expires_in = $accessToken->getRefreshTokenExpiresAt();
+            $token->save();
+        }
+
         $dataService = DataService::Configure(array(
             'auth_mode' => 'oauth2',
             'ClientID' => config('app.quickbooks.client_id'),
@@ -123,6 +135,53 @@ class QuickBooksRepository
         $account = $dataService->Query("SELECT * FROM Account WHERE AccountNumber = '$accountNumber'");
         return $account;
     }
+    // create account
+    public function createAccount($account)
+    {
+        $dataService = $this->getAccessToken();
+        $newAccount = Account::create([
+            "Name" => $account['name'],
+            "AccountType" => $account['account_type'],
+            // "AccountSubType" => $account['account_sub_type'],
+            // "AccNum" => $account['account_number'],
+            "Description" => $account['description'],
+            "Active" => $account['active'],
+            "Classification" => $account['classification'],
+            "CurrentBalance" => $account['current_balance'],
+            // "CurrentBalanceWithSubAccounts" => $account['current_balance_with_sub_accounts'],
+            "CurrencyRef" => [
+                "value" => 'USD',
+                "name" => 'United States Dollar'
+            ],
+            // "Domain" => $account['domain'],
+            "FullyQualifiedName" => $account['name'],
+            "SubAccount" => false,
+            "TaxCodeRef" => [
+                "value" => 'TAXABLE',
+                "name" =>'Taxable'
+            ],
+            // "TaxTypeApplicable" => 'TAXABLE',
+            // "AcctNum" => $account['account_number'],
+            // "AcctNumWithSubAccounts" => '',
+            // "AcctType" => $account['account_type'],
+            // "AcctTypeWithSubAccounts" => '',
+            // "Balance" => $account['current_balance'],
+            // "BalanceWithSubAccounts" => $account['balance_with_sub_accounts'],
+            // "ClassificationWithSubAccounts" => $account['classification_with_sub_accounts'],
+            // "FullyQualifiedNameWithSubAccounts" => $account['fully_qualified_name_with_sub_accounts'],
+            // "SubAccountWithSubAccounts" => false,
+            // "TaxTypeApplicableWithSubAccounts" => $account['tax_type_applicable_with_sub_accounts'],
+            // "UnitPrice" => $account['unit_price'],
+            // "UnitPriceWithSubAccounts" => $account['unit_price_with_sub_accounts'],
+            // "UnitPriceType" => $account['unit_price_type'],
+            // "UnitPriceTypeWithSubAccounts" => $account['unit_price_type_with_sub_accounts'],
+            // "UnitOfMeasure" => 'EACH',
+            // "UnitOfMeasureWithSubAccounts" => $account['unit_of_measure_with_sub_accounts'],
+        ]);
+        $resultingObj = $dataService->Add($newAccount);
+        return $resultingObj;
+    }
+
 
     
 }
