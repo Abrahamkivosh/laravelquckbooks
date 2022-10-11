@@ -32,6 +32,9 @@ Route::post('/quickbooks/account/store', [QuickBooksController::class, 'storeAcc
 Route::get('/quickbooks/account/edit/{id}', [QuickBooksController::class, 'editAccount'])->name('quickbooks.account.edit');
 Route::post('/quickbooks/account/update/{id}', [QuickBooksController::class, 'updateAccount'])->name('quickbooks.account.update');
 Route::get('/quickbooks/account/delete/{id}', [QuickBooksController::class, 'deleteAccount'])->name('quickbooks.account.delete');
+// quickbooks single account routes
+Route::get('/quickbooks/account/{id}', [QuickBooksController::class, 'account'])->name('quickbooks.account.single');
+
 // quickbooks customers routes
 
 

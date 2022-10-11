@@ -111,7 +111,9 @@ class QuickBooksRepository
     public function getAccount($id)
     {
         $dataService = $this->getAccessToken();
-        $account = $dataService->Query("SELECT * FROM Account WHERE Id = '$id'");
+        // get by id
+        $account = $dataService->FindById("Account", $id);
+        // $account = $dataService->Query("SELECT * FROM Account WHERE Id = '$id'");
         return $account;
     }
 

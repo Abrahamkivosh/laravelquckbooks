@@ -107,9 +107,20 @@ public function callback(Request $request)
     public function accounts()
     {
         $accounts = $this->quickbooks->getAccounts() ;
+        // return $accounts;
+        // convert accounts arrays to object
 
         return view('quickbooks.account', compact('accounts'));
     }
+    // quickbooks single account
+    public function account($id)
+    {
+        $account = $this->quickbooks->getAccount($id);
+        // get first object in array
+        // $account = dd($account) ;
+        return view('quickbooks.single_account', compact('account'));
+    }
+
    
    
 }

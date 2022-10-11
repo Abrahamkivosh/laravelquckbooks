@@ -19,6 +19,7 @@
                                 <th>Account Balance</th>
                                 <th>Account Currency</th>
                                 <th>Account Updated At</th>
+                                <th>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -33,6 +34,8 @@
                                     <td>{{ $account->CurrentBalance }}</td>
                                     <td>{{ $account->CurrencyRef }}</td>
                                     <td>{{ $account->MetaData->LastUpdatedTime }}</td>
+                                    <td>
+                                        <a href="{{ route('quickbooks.account.single', $account->Id) }}" class="btn btn-primary">View</a>
                                 </tr>
                             @endforeach
                             </tbody>
