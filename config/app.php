@@ -17,6 +17,18 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    /**
+     * quickbooks configuration settings 
+     *
+     */
+    'quickbooks' => [
+        'client_id' => env('QUICKBOOKS_CLIENT_ID'),
+        'client_secret' => env('QUICKBOOKS_CLIENT_SECRET'),
+        'redirect_uri' => env('QUICKBOOKS_REDIRECT_URI'),
+        'scope' => env('QUICKBOOKS_SCOPES'),
+        'base_url' => env('QUICKBOOKS_BASE_URL')
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
